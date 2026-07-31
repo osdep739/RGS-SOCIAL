@@ -1,0 +1,221 @@
+<<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RSG — Registro Supremo de Gastos (Social)</title>
+  
+  <meta name="apple-mobile-web-app-title" content="RSG Social">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#14181D">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="lockScreen">
+    <div class="lock-card">
+      <div class="lock-icon">🔒</div>
+      <h2>RSG SOCIAL</h2>
+      <p>Ingresá tu PIN de pruebas (Por defecto: <b>1234</b>)</p>
+      <div class="pin-dots">
+        <span class="dot" id="dot-1"></span>
+        <span class="dot" id="dot-2"></span>
+        <span class="dot" id="dot-3"></span>
+        <span class="dot" id="dot-4"></span>
+      </div>
+      <div class="keypad">
+        <button onclick="pressKey(1)">1</button>
+        <button onclick="pressKey(2)">2</button>
+        <button onclick="pressKey(3)">3</button>
+        <button onclick="pressKey(4)">4</button>
+        <button onclick="pressKey(5)">5</button>
+        <button onclick="pressKey(6)">6</button>
+        <button onclick="pressKey(7)">7</button>
+        <button onclick="pressKey(8)">8</button>
+        <button onclick="pressKey(9)">9</button>
+        <button onclick="clearPin()">C</button>
+        <button onclick="pressKey(0)">0</button>
+        <button onclick="authenticateBiometric()">🔑</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container" id="appMain" style="display: none;">
+    <header class="app-header">
+      <div class="logo-box">
+        <img src="icon-512.png" alt="RSG Logo" class="app-logo">
+        <div>
+          <h1>RSG App <span class="badge-demo">SOCIAL</span></h1>
+          <p>Panel Social de Pruebas</p>
+        </div>
+      </div>
+      <button class="btn-icon" onclick="lockApp()">🔒</button>
+    </header>
+
+    <section class="alert-banner" id="cardAlerts">
+      <div class="alert-header">
+        <span class="alert-icon">🔔</span>
+        <strong>Alertas de Próximos Vencimientos</strong>
+      </div>
+      <div id="alertList">
+        </div>
+    </section>
+
+    <section class="summary-cards">
+      <div class="card card-gold">
+        <small>Gastos del Mes (ARS)</small>
+        <h2 id="totalARS">$0,00</h2>
+      </div>
+      <div class="card card-dark">
+        <small>Gastos del Mes (USD)</small>
+        <h2 id="totalUSD">US$ 0,00</h2>
+      </div>
+    </section>
+
+    <nav class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-registro')">➕ Registrar</button>
+      <button class="tab-btn" onclick="switchTab('tab-lector')">📄 Lector Resumen</button>
+      <button class="tab-btn" onclick="switchTab('tab-tarjetas')">💳 Tarjetas & Alertas</button>
+      <button class="tab-btn" onclick="switchTab('tab-historico')">📊 Histórico</button>
+    </nav>
+
+    <div id="tab-registro" class="tab-content active">
+      <h3>Nuevo Movimiento</h3>
+      <form id="txForm">
+        <div class="form-group">
+          <label>Monto</label>
+          <div class="input-row">
+            <input type="number" id="txAmount" placeholder="0.00" step="0.01" required>
+            <select id="txCurrency">
+              <option value="ARS">ARS ($)</option>
+              <option value="USD">USD (US$)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Detalle / Comercio</label>
+          <input type="text" id="txDetail" placeholder="Ej: Carga YPF / Supermercado" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoría</label>
+            <select id="txCategory">
+              <option value="Supermercado">Supermercado</option>
+              <option value="Combustibles">Combustibles</option>
+              <option value="Servicios">Servicios</option>
+              <option value="Restaurantes">Restaurantes</option>
+              <option value="Tecnología">Tecnología</option>
+              <option value="Inversiones">Inversiones</option>
+              <option value="Varios">Varios</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tarjeta / Medio</label>
+            <select id="txMethod">
+              <option value="BBVA Visa Signature">BBVA Visa Signature</option>
+              <option value="Débito Directo">Débito Directo</option>
+              <option value="Efectivo / Transferencia">Efectivo / Transferencia</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">Guardar Registro</button>
+      </form>
+    </div>
+
+    <div id="tab-lector" class="tab-content">
+      <h3>📄 Lector Inteligente de Resúmenes</h3>
+      <p class="subtitle">Subí tu archivo PDF o Excel del resumen de la tarjeta para extraer consumos automáticamente.</p>
+      
+      <div class="upload-box" id="dropZone">
+        <span class="upload-icon">📂</span>
+        <p>Arrastrá tu archivo de resumen o tocá para seleccionar</p>
+        <small>Soporta archivos .PDF, .XLS, .XLSX y .CSV</small>
+        <input type="file" id="fileInput" accept=".pdf,.csv,.xls,.xlsx" style="display: none;">
+      </div>
+
+      <div id="extractedPreview" style="display: none; margin-top: 15px;">
+        <h4>Consumos Detectados:</h4>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Detalle</th>
+                <th>Monto</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="extractedRows"></tbody>
+          </table>
+        </div>
+        <button class="btn-submit" onclick="importExtractedData()" style="margin-top: 10px;">Importar Seleccionados a la App</button>
+      </div>
+    </div>
+
+    <div id="tab-tarjetas" class="tab-content">
+      <h3>💳 Configuración de Tarjetas y Alertas</h3>
+      <p class="subtitle">Configurá las fechas de cierre y vencimiento para recibir recordatorios automáticos.</p>
+      
+      <form id="cardForm">
+        <div class="form-group">
+          <label>Nombre de la Tarjeta</label>
+          <input type="text" id="cardName" placeholder="Ej: BBVA Visa Signature" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Día de Cierre (Cada mes)</label>
+            <input type="number" id="cardCloseDay" min="1" max="31" placeholder="Ej: 25" required>
+          </div>
+          <div class="form-group">
+            <label>Día de Vencimiento</label>
+            <input type="number" id="cardDueDay" min="1" max="31" placeholder="Ej: 5" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">Guardar Configuración de Tarjeta</button>
+      </form>
+
+      <h4 style="margin-top: 20px;">Tarjetas Registradas</h4>
+      <div id="cardList"></div>
+    </div>
+
+    <div id="tab-historico" class="tab-content">
+      <div class="section-between">
+        <h3>📊 Histórico de Movimientos</h3>
+        <button class="btn-gold" onclick="exportToExcel()">📊 Exportar Excel (.csv)</button>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Detalle</th>
+              <th>Categoría</th>
+              <th>Medio</th>
+              <th>Monto</th>
+            </tr>
+          </thead>
+          <tbody id="historyRows"></tbody>
+        </table>
+      </div>
+      
+      <button class="btn-danger" onclick="resetDemoData()" style="margin-top: 25px;">🗑️ Reiniciar Datos de Prueba (Limpiar Social)</button>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>

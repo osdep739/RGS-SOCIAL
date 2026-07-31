@@ -1,0 +1,74 @@
+:root {
+  --bg-dark: #14181D;
+  --card-bg: #1E242B;
+  --gold: #D4AF37;
+  --gold-glow: rgba(212, 175, 55, 0.25);
+  --text-light: #F0F2F5;
+  --text-muted: #8E9BAA;
+  --border-color: #2C3540;
+  --danger: #E63946;
+  --success: #2A9D8F;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+body { background-color: var(--bg-dark); color: var(--text-light); min-height: 100vh; padding: 12px; }
+
+/* Lock Screen */
+#lockScreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg-dark); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
+.lock-card { background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); text-align: center; max-width: 360px; width: 100%; }
+.lock-icon { font-size: 40px; margin-bottom: 10px; }
+.pin-dots { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
+.dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--gold); }
+.dot.filled { background: var(--gold); box-shadow: 0 0 8px var(--gold-glow); }
+
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.keypad button { background: #252D36; border: 1px solid var(--border-color); color: #fff; font-size: 20px; font-weight: bold; padding: 15px; border-radius: 12px; cursor: pointer; }
+.keypad button:active { background: var(--gold); color: #000; }
+
+/* Header */
+.app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.logo-box { display: flex; align-items: center; gap: 10px; }
+.app-logo { width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--gold); }
+.badge-demo { background: var(--gold); color: #000; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
+
+/* Alert Banner */
+.alert-banner { background: rgba(212, 175, 55, 0.1); border: 1px solid var(--gold); border-radius: 12px; padding: 12px; margin-bottom: 15px; }
+.alert-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: var(--gold); font-size: 14px; }
+.alert-item { font-size: 13px; color: var(--text-light); padding: 4px 0; border-bottom: 1px dashed var(--border-color); }
+.alert-item:last-child { border-bottom: none; }
+
+/* Cards & Tabs */
+.summary-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+.card { background: var(--card-bg); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); }
+.card-gold { border-color: var(--gold); }
+.card h2 { font-size: 20px; font-weight: bold; color: var(--gold); margin-top: 4px; }
+
+.nav-tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
+.tab-btn { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 12px; border-radius: 8px; font-size: 12px; white-space: nowrap; cursor: pointer; }
+.tab-btn.active { background: var(--gold); color: #000; font-weight: bold; border-color: var(--gold); }
+
+.tab-content { display: none; background: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border-color); }
+.tab-content.active { display: block; }
+
+/* Form Controls */
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+input, select { width: 100%; background: #14181D; border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.input-row { display: flex; gap: 8px; }
+
+.btn-submit { width: 100%; background: var(--gold); color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+.btn-gold { background: var(--gold); color: #000; font-weight: bold; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+.btn-danger { width: 100%; background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 10px; border-radius: 8px; cursor: pointer; }
+
+/* Upload Box */
+.upload-box { border: 2px dashed var(--gold); padding: 25px; border-radius: 12px; text-align: center; cursor: pointer; background: rgba(212, 175, 55, 0.05); }
+.upload-icon { font-size: 32px; display: block; margin-bottom: 8px; }
+
+/* Tables */
+.table-responsive { overflow-x: auto; margin-top: 10px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th, .data-table td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border-color); }
+.data-table th { color: var(--text-muted); font-weight: 600; }
+.section-between { display: flex; justify-content: space-between; align-items: center; }
