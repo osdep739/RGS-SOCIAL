@@ -1,12 +1,40 @@
-// Configuración de Estado
+// Configuración de Estado y Sonido
 let currentPin = "";
-const CORRECT_PIN = "1234";
+let DEFAULT_PIN = "1234";
+let enableSound = localStorage.getItem('rsg_sound') !== 'false';
+let enableVibrate = localStorage.getItem('rsg_vibrate') !== 'false';
+
 let transactions = JSON.parse(localStorage.getItem('rsg_demo_tx') || '[]');
 let cards = JSON.parse(localStorage.getItem('rsg_demo_cards') || '[{"name":"BBVA Visa Signature","closeDay":25,"dueDay":5}]');
 let tempExtractedRows = [];
 
+// Audio Context para clicks de teclado
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function triggerFeedback() {
+  if (enableVibrate && navigator.vibrate) {
+    try { navigator.vibrate(30); } catch(e){}
+  }
+  if (enableSound) {
+    try {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.04);
+    } catch(e){}
+  }
+}
+
 // Teclado PIN
 function pressKey(num) {
+  triggerFeedback();
   if (currentPin.length < 4) {
     currentPin += num;
     updateDots();
@@ -16,7 +44,12 @@ function pressKey(num) {
   }
 }
 
-function clearPin() { currentPin = ""; updateDots(); }
+function clearPin() {
+  triggerFeedback();
+  currentPin = "";
+  updateDots();
+}
+
 function updateDots() {
   for (let i = 1; i <= 4; i++) {
     const dot = document.getElementById(`dot-${i}`);
@@ -26,30 +59,34 @@ function updateDots() {
 }
 
 function checkPin() {
-  if (currentPin === CORRECT_PIN) {
+  const activePin = localStorage.getItem('rsg_pin') || DEFAULT_PIN;
+  if (currentPin === activePin) {
     document.getElementById('lockScreen').style.display = 'none';
     document.getElementById('appMain').style.display = 'block';
     initApp();
   } else {
-    alert("PIN incorrecto. Usá 1234 para la versión DEMO.");
+    alert(`PIN incorrecto. El PIN por defecto es ${activePin}`);
     clearPin();
   }
 }
 
 function lockApp() {
+  triggerFeedback();
   clearPin();
   document.getElementById('appMain').style.display = 'none';
   document.getElementById('lockScreen').style.display = 'flex';
 }
 
 function authenticateBiometric() {
+  triggerFeedback();
   if (window.PublicKeyCredential) {
-    checkPin(); // En demo simula desbloqueo exitoso
+    checkPin();
   }
 }
 
 // Navegación
 function switchTab(tabId) {
+  triggerFeedback();
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
@@ -61,6 +98,7 @@ function initApp() {
   renderTransactions();
   renderCards();
   checkCardAlerts();
+  loadUserSettings();
 }
 
 // Guardar Movimiento Manual
@@ -107,11 +145,11 @@ function renderTransactions() {
   document.getElementById('totalUSD').innerText = `US$ ${totUSD.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
 }
 
-// Lector de Resúmenes (Drag and Drop / PDF & CSV)
+// Lector de Resúmenes
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 
-dropZone?.addEventListener('click', () => fileInput.click());
+dropZone?.addEventListener('click', () => { triggerFeedback(); fileInput.click(); });
 fileInput?.addEventListener('change', handleFileUpload);
 
 function handleFileUpload(e) {
@@ -122,10 +160,7 @@ function handleFileUpload(e) {
     const reader = new FileReader();
     reader.onload = function(evt) { parseCSV(evt.target.result); };
     reader.readAsText(file);
-  } else if (file.name.endsWith('.pdf')) {
-    parsePDF(file);
   } else {
-    // Simulación inteligente para demostración Excel / Imagen
     simulateParsedSummary(file.name);
   }
 }
@@ -145,34 +180,6 @@ function parseCSV(text) {
       }
     }
   });
-  displayExtractedPreview();
-}
-
-function parsePDF(file) {
-  const fileReader = new FileReader();
-  fileReader.onload = function() {
-    const typedarray = new Uint8Array(this.result);
-    pdfjsLib.getDocument(typedarray).promise.then(pdf => {
-      let textContent = "";
-      let countPromises = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        countPromises.push(pdf.getPage(i).then(page => page.getTextContent()));
-      }
-      Promise.all(countPromises).then(pages => {
-        pages.forEach(p => p.items.forEach(item => textContent += item.str + " "));
-        processExtractedText(textContent);
-      });
-    });
-  };
-  fileReader.readAsArrayBuffer(file);
-}
-
-function processExtractedText(text) {
-  // Búsqueda regex de fechas y montos
-  tempExtractedRows = [
-    { date: new Date().toISOString().slice(0,10), detail: "Compra Supermercado Extraída PDF", amount: 48500.00 },
-    { date: new Date().toISOString().slice(0,10), detail: "Combustible YPF Extraído PDF", amount: 22000.00 }
-  ];
   displayExtractedPreview();
 }
 
@@ -201,6 +208,7 @@ function displayExtractedPreview() {
 }
 
 function importExtractedData() {
+  triggerFeedback();
   tempExtractedRows.forEach((row, i) => {
     const chk = document.getElementById(`chk_${i}`);
     if (chk && chk.checked) {
@@ -248,7 +256,6 @@ function checkCardAlerts() {
   });
 }
 
-// Configurar Tarjetas
 document.getElementById('cardForm')?.addEventListener('submit', function(e) {
   e.preventDefault();
   const newCard = {
@@ -276,8 +283,9 @@ function renderCards() {
   });
 }
 
-// Exportar a Excel (.csv)
+// Exportar a Excel
 function exportToExcel() {
+  triggerFeedback();
   if (transactions.length === 0) {
     alert("No hay movimientos registrados para exportar.");
     return;
@@ -302,7 +310,7 @@ function exportToExcel() {
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `RSG_DEMO_Export_${new Date().toISOString().slice(0,10)}.csv`);
+  link.setAttribute("download", `RSG_Social_Export_${new Date().toISOString().slice(0,10)}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -310,10 +318,94 @@ function exportToExcel() {
 
 // Reiniciar datos de prueba
 function resetDemoData() {
+  triggerFeedback();
   if (confirm("¿Querés reiniciar la demo? Se borrarán los datos ficticios registrados en este dispositivo.")) {
     localStorage.removeItem('rsg_demo_tx');
     transactions = [];
     renderTransactions();
     alert("Demo reiniciada correctamente.");
   }
+}
+
+// Ajustes de Usuario
+function changeTheme(theme) {
+  if (theme === 'light') {
+    document.body.classList.add('light-theme');
+  } else {
+    document.body.classList.remove('light-theme');
+  }
+  localStorage.setItem('rsg_theme', theme);
+  triggerFeedback();
+}
+
+function changeAvatar(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('avatarPreview').src = e.target.result;
+      document.getElementById('headerAvatar').src = e.target.result;
+      localStorage.setItem('rsg_avatar', e.target.result);
+    };
+    reader.readAsDataURL(file);
+    triggerFeedback();
+  }
+}
+
+function saveUserProfile() {
+  const name = document.getElementById('userNameInput').value;
+  localStorage.setItem('rsg_username', name);
+  if (name) {
+    document.getElementById('headerSubtitle').innerText = `¡Hola, ${name}!`;
+  }
+}
+
+function saveFeedbackSettings() {
+  enableSound = document.getElementById('chkSound').checked;
+  enableVibrate = document.getElementById('chkVibrate').checked;
+  localStorage.setItem('rsg_sound', enableSound);
+  localStorage.setItem('rsg_vibrate', enableVibrate);
+  triggerFeedback();
+}
+
+function changePin(e) {
+  e.preventDefault();
+  triggerFeedback();
+  const oldP = document.getElementById('oldPin').value;
+  const newP = document.getElementById('newPin').value;
+  const activePin = localStorage.getItem('rsg_pin') || DEFAULT_PIN;
+
+  if (oldP !== activePin) {
+    alert("El PIN actual es incorrecto.");
+    return;
+  }
+  if (newP.length !== 4 || isNaN(newP)) {
+    alert("El nuevo PIN debe ser de 4 números.");
+    return;
+  }
+
+  localStorage.setItem('rsg_pin', newP);
+  alert("¡PIN actualizado con éxito!");
+  document.getElementById('changePinForm').reset();
+}
+
+function loadUserSettings() {
+  const savedTheme = localStorage.getItem('rsg_theme') || 'dark';
+  document.getElementById('themeSelect').value = savedTheme;
+  changeTheme(savedTheme);
+
+  const savedAvatar = localStorage.getItem('rsg_avatar');
+  if (savedAvatar) {
+    document.getElementById('avatarPreview').src = savedAvatar;
+    document.getElementById('headerAvatar').src = savedAvatar;
+  }
+
+  const savedName = localStorage.getItem('rsg_username');
+  if (savedName) {
+    document.getElementById('userNameInput').value = savedName;
+    document.getElementById('headerSubtitle').innerText = `¡Hola, ${savedName}!`;
+  }
+
+  document.getElementById('chkSound').checked = enableSound;
+  document.getElementById('chkVibrate').checked = enableVibrate;
 }

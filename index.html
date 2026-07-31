@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -20,11 +20,12 @@
 </head>
 <body>
 
+  <!-- Pantalla de Bloqueo / PIN / Biometría -->
   <div id="lockScreen">
     <div class="lock-card">
       <div class="lock-icon">🔒</div>
       <h2>RSG SOCIAL</h2>
-      <p>Ingresá tu PIN de pruebas (Por defecto: <b>1234</b>)</p>
+      <p>Ingresá tu PIN de acceso (Por defecto: <b>1234</b>)</p>
       <div class="pin-dots">
         <span class="dot" id="dot-1"></span>
         <span class="dot" id="dot-2"></span>
@@ -48,27 +49,31 @@
     </div>
   </div>
 
+  <!-- App Principal -->
   <div class="app-container" id="appMain" style="display: none;">
     <header class="app-header">
       <div class="logo-box">
-        <img src="icon-512.png" alt="RSG Logo" class="app-logo">
+        <img id="headerAvatar" src="icon-512.png" alt="RSG Logo" class="app-logo">
         <div>
-          <h1>RSG App <span class="badge-demo">SOCIAL</span></h1>
-          <p>Panel Social de Pruebas</p>
+          <h1 id="headerTitle">RSG App <span class="badge-demo">SOCIAL</span></h1>
+          <p id="headerSubtitle">Panel Social de Pruebas</p>
         </div>
       </div>
       <button class="btn-icon" onclick="lockApp()">🔒</button>
     </header>
 
+    <!-- Banner de Alertas de Vencimiento y Cierre de Tarjetas -->
     <section class="alert-banner" id="cardAlerts">
       <div class="alert-header">
         <span class="alert-icon">🔔</span>
         <strong>Alertas de Próximos Vencimientos</strong>
       </div>
       <div id="alertList">
-        </div>
+        <!-- Se genera dinámicamente con JS -->
+      </div>
     </section>
 
+    <!-- Dashboard de Saldos -->
     <section class="summary-cards">
       <div class="card card-gold">
         <small>Gastos del Mes (ARS)</small>
@@ -80,13 +85,16 @@
       </div>
     </section>
 
+    <!-- Pestañas de Funciones -->
     <nav class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('tab-registro')">➕ Registrar</button>
       <button class="tab-btn" onclick="switchTab('tab-lector')">📄 Lector Resumen</button>
       <button class="tab-btn" onclick="switchTab('tab-tarjetas')">💳 Tarjetas & Alertas</button>
       <button class="tab-btn" onclick="switchTab('tab-historico')">📊 Histórico</button>
+      <button class="tab-btn" onclick="switchTab('tab-ajustes')">⚙️ Ajustes</button>
     </nav>
 
+    <!-- Tab 1: Registrar Gasto -->
     <div id="tab-registro" class="tab-content active">
       <h3>Nuevo Movimiento</h3>
       <form id="txForm">
@@ -126,10 +134,11 @@
             </select>
           </div>
         </div>
-        <button type="submit" class="btn-submit">Guardar Registro</button>
+        <button type="submit" class="btn-submit" onclick="triggerFeedback()">Guardar Registro</button>
       </form>
     </div>
 
+    <!-- Tab 2: Lector de Resúmenes (PDF / Excel) -->
     <div id="tab-lector" class="tab-content">
       <h3>📄 Lector Inteligente de Resúmenes</h3>
       <p class="subtitle">Subí tu archivo PDF o Excel del resumen de la tarjeta para extraer consumos automáticamente.</p>
@@ -160,6 +169,7 @@
       </div>
     </div>
 
+    <!-- Tab 3: Gestión de Tarjetas y Alertas -->
     <div id="tab-tarjetas" class="tab-content">
       <h3>💳 Configuración de Tarjetas y Alertas</h3>
       <p class="subtitle">Configurá las fechas de cierre y vencimiento para recibir recordatorios automáticos.</p>
@@ -179,13 +189,14 @@
             <input type="number" id="cardDueDay" min="1" max="31" placeholder="Ej: 5" required>
           </div>
         </div>
-        <button type="submit" class="btn-submit">Guardar Configuración de Tarjeta</button>
+        <button type="submit" class="btn-submit" onclick="triggerFeedback()">Guardar Configuración de Tarjeta</button>
       </form>
 
       <h4 style="margin-top: 20px;">Tarjetas Registradas</h4>
       <div id="cardList"></div>
     </div>
 
+    <!-- Tab 4: Histórico & Exportar Excel -->
     <div id="tab-historico" class="tab-content">
       <div class="section-between">
         <h3>📊 Histórico de Movimientos</h3>
@@ -207,6 +218,64 @@
       </div>
       
       <button class="btn-danger" onclick="resetDemoData()" style="margin-top: 25px;">🗑️ Reiniciar Datos de Prueba (Limpiar Social)</button>
+    </div>
+
+    <!-- Tab 5: Ajustes y Configuración -->
+    <div id="tab-ajustes" class="tab-content">
+      <h3>⚙️ Ajustes y Perfil</h3>
+      <p class="subtitle">Personalizá tu experiencia, avatar, temas y seguridad.</p>
+
+      <!-- Perfil -->
+      <div class="profile-section">
+        <div class="avatar-wrapper">
+          <img id="avatarPreview" src="icon-512.png" alt="Avatar" class="profile-avatar">
+          <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="changeAvatar(event)">
+          <button class="btn-small" onclick="document.getElementById('avatarInput').click()">📷 Cambiar Foto</button>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+          <label>Nombre de Usuario</label>
+          <input type="text" id="userNameInput" placeholder="Tu Nombre (Ej: Osvaldo)" onchange="saveUserProfile()">
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Apariencia -->
+      <h4>🎨 Apariencia y Tema</h4>
+      <div class="form-group">
+        <label>Tema Visual</label>
+        <select id="themeSelect" onchange="changeTheme(this.value)">
+          <option value="dark">🌙 Modo Oscuro (Negro & Dorado)</option>
+          <option value="light">☀️ Modo Claro (Blanco & Dorado)</option>
+        </select>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Sonido y Vibración -->
+      <h4>🔊 Sonido y Respuesta Háptica</h4>
+      <div class="form-group checkbox-group">
+        <label><input type="checkbox" id="chkSound" onchange="saveFeedbackSettings()"> 🔔 Sonido al presionar botones/teclado</label>
+      </div>
+      <div class="form-group checkbox-group" style="margin-top: 8px;">
+        <label><input type="checkbox" id="chkVibrate" onchange="saveFeedbackSettings()"> 📳 Vibración en el teléfono (Android/iOS)</label>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Seguridad PIN -->
+      <h4>🔒 Cambiar PIN de Acceso</h4>
+      <form id="changePinForm" onsubmit="changePin(event)">
+        <div class="form-group">
+          <label>PIN Actual</label>
+          <input type="password" id="oldPin" maxlength="4" placeholder="****" required>
+        </div>
+        <div class="form-group">
+          <label>Nuevo PIN (4 dígitos)</label>
+          <input type="password" id="newPin" maxlength="4" placeholder="****" required>
+        </div>
+        <button type="submit" class="btn-submit">Actualizar PIN</button>
+      </form>
     </div>
 
   </div>
